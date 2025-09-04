@@ -108,7 +108,7 @@ export const Header: React.FC = () => {
                 to="/forum" 
                 className={`nav-link ${isActive('/forum') ? 'active' : ''}`}
               >
-                Forum
+                Diễn đàn
               </Link>
             </>
           )}

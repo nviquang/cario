@@ -149,7 +149,7 @@ export const ForumPage: React.FC = () => {
     <div className="forum-page">
       <div className="forum-container">
         <div className="forum-header">
-          <h1>Forum Cario</h1>
+          <h1>Diễn đàn Cario</h1>
           <p>Chia sẻ kinh nghiệm và thảo luận cùng cộng đồng</p>
         </div>
 
