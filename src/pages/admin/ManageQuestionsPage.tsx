@@ -106,18 +106,19 @@ export const ManageQuestionsPage: React.FC = () => {
     
     try {
       if (editingQuestion) {
-        // Cập nhật câu hỏi
-        const updatedQuestion: Question = {
-          ...editingQuestion,
-          ...formData
+        // Cập nhật câu hỏi qua API
+        const payload = {
+          id: editingQuestion.id,
+          content: formData.content,
+          type: formData.type,
+          answers: formData.answers.map(a => ({ id: a.id, content: a.content }))
         };
-        
-        setQuestions(prev => 
-          prev.map(q => q.id === editingQuestion.id ? updatedQuestion : q)
-        );
-        
-        // TODO: Gọi API cập nhật
-        console.log('Cập nhật câu hỏi:', updatedQuestion);
+        const res = await apiService.updateQuestion(payload as any);
+        if (!res.success) {
+          throw new Error(res.error || 'Không thể cập nhật câu hỏi');
+        }
+        const refresh = await apiService.getQuestions(selectedType);
+        setQuestions(refresh.success && refresh.data ? refresh.data : []);
       } else {
         // Thêm câu hỏi mới qua API
         const payload = {

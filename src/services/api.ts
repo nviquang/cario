@@ -211,6 +211,35 @@ class ApiService {
     }
   }
 
+  async updateQuestion(payload: {
+    id: number | string;
+    content: string;
+    type: 'science' | 'stone' | 'fantasy' | 'ordinary';
+    answers: Array<{ id: number | string; content: string }>;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const url = `${API_BASE_URL}/api/question/update`;
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        mode: 'cors',
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return { success: false, error: errorData.message || errorData.error || 'Cập nhật câu hỏi thất bại' };
+      }
+      const data = await response.json().catch(() => ({}));
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Không thể cập nhật câu hỏi' };
+    }
+  }
+
   // Chatbot API
   async chat(message: string): Promise<ApiResponse<{ response: string }>> {
     const url = `${CHATBOT_API_URL}/query`;
