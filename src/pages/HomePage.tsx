@@ -16,9 +16,9 @@ export const HomePage: React.FC = () => {
               loop={0}
               cursor
               cursorStyle="|"
-              typeSpeed={70}
-              deleteSpeed={50}
-              delaySpeed={1500}
+              typeSpeed={77}
+              deleteSpeed={55}
+              delaySpeed={2000}
             />
             &nbsp;<span className="highlight">Cario</span>
           </h1>

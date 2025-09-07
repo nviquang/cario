@@ -296,7 +296,7 @@ class ApiService {
   // Forum API
   async getPosts(): Promise<ApiResponse<any[]>> {
     try {
-      const url = `${API_BASE_URL}/api/posts/get-all`;
+      const url = `${API_BASE_URL}/api/posts/get`;
       console.log('Getting posts from:', url);
 
       const response = await fetch(url, {
@@ -370,6 +370,50 @@ class ApiService {
         success: false,
         error: error instanceof Error ? error.message : 'Không thể tạo bài viết',
       };
+    }
+  }
+
+  async updatePost(payload: { title: string; content: string; id: number | string }): Promise<ApiResponse<any>> {
+    try {
+      const url = `${API_BASE_URL}/api/posts/update`;
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        mode: 'cors',
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return { success: false, error: errorData.message || errorData.error || 'Cập nhật bài viết thất bại' };
+      }
+      const data = await response.json().catch(() => ({}));
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Không thể cập nhật bài viết' };
+    }
+  }
+
+  async deletePost(id: number | string): Promise<ApiResponse<any>> {
+    try {
+      const url = `${API_BASE_URL}/api/posts/delete/${id}`;
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json' },
+        mode: 'cors',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return { success: false, error: errorData.message || errorData.error || 'Xóa bài viết thất bại' };
+      }
+      const data = await response.json().catch(() => ({}));
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Không thể xóa bài viết' };
     }
   }
 

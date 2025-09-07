@@ -14,6 +14,7 @@ interface Post {
   comments: number;
   shares: number;
   isLiked: boolean;
+  ownerUsername?: string;
 }
 
 // Utility function để tính thời gian đã đăng
@@ -50,6 +51,11 @@ export const ForumPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [menuOpenPostId, setMenuOpenPostId] = useState<string | null>(null);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editPostTitle, setEditPostTitle] = useState('');
+  const [editPostContent, setEditPostContent] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Load posts từ API khi component mount
   useEffect(() => {
@@ -86,10 +92,11 @@ export const ForumPage: React.FC = () => {
             title: post.title || post.subject || 'Không có tiêu đề',
             content: post.content || post.body || post.text || 'Không có nội dung',
             timestamp: timeAgo,
-            likes: post.likes || post.likeCount || 0,
-            comments: post.comments || post.commentCount || 0,
+            likes: post.countLike ?? post.likes ?? post.likeCount ?? 0,
+            comments: post.countComment ?? post.comments ?? post.commentCount ?? 0,
             shares: post.shares || post.shareCount || 0,
-            isLiked: post.isLiked || false,
+            isLiked: post.userIsLike ?? post.isLiked ?? false,
+            ownerUsername: post.userOfPost?.username || undefined,
           };
         });
         
@@ -142,6 +149,55 @@ export const ForumPage: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi tạo bài viết');
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const openEditModal = (post: Post) => {
+    setEditingPostId(post.id);
+    setEditPostTitle(post.title || '');
+    setEditPostContent(post.content || '');
+  };
+
+  const closeEditModal = () => {
+    setEditingPostId(null);
+    setEditPostTitle('');
+    setEditPostContent('');
+  };
+
+  const handleUpdatePost = async () => {
+    if (!editingPostId || !editPostTitle.trim() || !editPostContent.trim() || isUpdating) return;
+    try {
+      setIsUpdating(true);
+      setError(null);
+      // Theo định dạng yêu cầu: { title, content, id }
+      const payload = { title: editPostTitle.trim(), content: editPostContent.trim(), id: editingPostId } as {
+        title: string; content: string; id: string;
+      };
+      const res = await apiService.updatePost(payload);
+      if (!res.success) {
+        throw new Error(res.error || 'Không thể cập nhật bài viết');
+      }
+      await loadPosts();
+      closeEditModal();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Có lỗi xảy ra khi cập nhật bài viết');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa bài viết này?')) return;
+    try {
+      const res = await apiService.deletePost(postId);
+      if (!res.success) {
+        throw new Error(res.error || 'Không thể xóa bài viết');
+      }
+      await loadPosts();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Có lỗi xảy ra khi xóa bài viết');
+    } finally {
+      setMenuOpenPostId(null);
     }
   };
 
@@ -258,8 +314,8 @@ export const ForumPage: React.FC = () => {
         {!isLoading && !error && posts.length > 0 && (
           <div className="posts-feed">
             {posts.map((post) => (
-              <div key={post.id} className="post-item">
-                <div className="post-header">
+              <div key={post.id} className="post-item" style={{ position: 'relative' }}>
+                <div className="post-header" style={{ position: 'relative' }}>
                   <div className="post-author">
                     <div className="avatar">{post.author.avatar}</div>
                     <div className="author-info">
@@ -267,6 +323,54 @@ export const ForumPage: React.FC = () => {
                       <div className="post-time">{post.timestamp}</div>
                     </div>
                   </div>
+                  {post.ownerUsername && post.ownerUsername === (localStorage.getItem('username') || '') && (
+                    <button
+                      aria-label="Tùy chọn bài viết"
+                      onClick={() => setMenuOpenPostId(menuOpenPostId === post.id ? null : post.id)}
+                      style={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: 18,
+                        color: '#000000',
+                        padding: 6,
+                        borderRadius: 8
+                      }}
+                    >
+                      ⋯
+                    </button>
+                  )}
+                  {menuOpenPostId === post.id && post.ownerUsername === (localStorage.getItem('username') || '') && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 36,
+                        right: 8,
+                        background: '#ffffff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: 8,
+                        boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+                        zIndex: 10,
+                        overflow: 'hidden'
+                      }}
+                    >
+                      <button
+                        onClick={() => { setMenuOpenPostId(null); openEditModal(post); }}
+                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#000000' }}
+                      >
+                        ✏️ Chỉnh sửa
+                      </button>
+                      <button
+                        onClick={() => handleDeletePost(post.id)}
+                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#dc2626' }}
+                      >
+                        🗑️ Xóa bài viết
+                      </button>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="post-title">
@@ -314,6 +418,55 @@ export const ForumPage: React.FC = () => {
         >
           +
         </button>
+
+        {/* Modal chỉnh sửa bài viết */}
+        {editingPostId && (
+          <div className="create-post-modal" onClick={closeEditModal}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Chỉnh sửa bài viết</h3>
+                <button 
+                  className="close-btn" 
+                  onClick={closeEditModal}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="post-form">
+                <div className="post-author" style={{ marginBottom: 8 }}>
+                  <div className="avatar">
+                    {(localStorage.getItem('username') || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="author-info">
+                    <div className="author-name">{localStorage.getItem('username') || 'Người dùng'}</div>
+                  </div>
+                </div>
+                <input
+                  className="post-title-input"
+                  placeholder="Tiêu đề bài viết..."
+                  value={editPostTitle}
+                  onChange={(e) => setEditPostTitle(e.target.value)}
+                />
+                <textarea
+                  className="post-input"
+                  placeholder="Nội dung bài viết..."
+                  value={editPostContent}
+                  onChange={(e) => setEditPostContent(e.target.value)}
+                  rows={4}
+                />
+                <div className="post-actions">
+                  <button 
+                    className="post-btn"
+                    onClick={handleUpdatePost}
+                    disabled={!editPostTitle.trim() || !editPostContent.trim() || isUpdating}
+                  >
+                    {isUpdating ? 'Đang lưu...' : 'Lưu thay đổi'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

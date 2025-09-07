@@ -1,3 +1,42 @@
+.brand-title,
+.quiz-header h1 {
+  background: none !important;
+  -webkit-text-fill-color: initial !important;
+  color: #1f2937 !important;
+}
+
+/* Remove red backgrounds from nav links; keep red as text/accent */
+.nav-link.active {
+  background: none !important;
+  color: #e63946 !important;
+  box-shadow: none !important;
+  border-bottom: 2px solid #ff6b6b !important;
+}
+.nav-link:hover {
+  background: none !important;
+  color: #e63946 !important;
+}
+
+/* Question number chip: no red background */
+.question-number {
+  background: #ffffff !important;
+  /* color: #e63946 !important; */
+  border: 1px solid #ff6b6b !important;
+  box-shadow: none !important;
+}
+
+/* Selection/info panels: revert to neutral background */
+.selected-type-info {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.choice-item:hover:not(.correct):not(.incorrect) {
+  background: #ffffff !important;
+}
+.choice-item.selected {
+  background: #ffffff !important;
+}
 /* Reset và base styles */
 * {
   margin: 0;
@@ -12,7 +51,7 @@ html, body {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   color: #333;
@@ -487,14 +526,16 @@ body {
 
 .question-number {
   display: inline-block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: transparent;
+  color: #1c1a1a;
   padding: 5px 10px;
   border-radius: 16px;
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 900;
   margin-bottom: 12px;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  box-shadow: none;
+  position: relative;
+  z-index: 2;
 }
 
 .question-text {
@@ -1868,10 +1909,11 @@ body {
 }
 
 .hero-title .highlight {
-  background: linear-gradient(45deg, #ffd700, #ffed4e);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #e63946;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: initial;
+  background-clip: initial;
+  text-shadow: none;
 }
 
 .hero-subtitle {
@@ -1879,6 +1921,7 @@ body {
   margin-bottom: 40px;
   opacity: 0.9;
   font-weight: 300;
+  color: #000000;
 }
 
 .user-welcome {
@@ -3669,3 +3712,138 @@ body {
 }
 
 
+/* Theme overrides: Light Red palette */
+.auth-header h1,
+.quiz-start-header h1 {
+  /* Keep these titles solid dark text instead of gradient */
+  background: none !important;
+  -webkit-text-fill-color: initial !important;
+  color: #1f2937 !important;
+}
+
+/* Ensure header containers also have no red backgrounds */
+.quiz-start-header,
+.auth-header {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* In case some pages use .auth-title instead of .auth-header h1 */
+.auth-title {
+  -webkit-text-fill-color: initial !important;
+  color: #1f2937 !important;
+}
+
+.loading-page,
+.auth-page,
+.quiz-page,
+.chat-page,
+.forum-page,
+.home-page,
+.quiz-start-page {
+  background: #FFD580;
+}
+
+.auth-header h1,
+.quiz-header h1,
+.brand-title,
+.quiz-start-header h1 {
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.link,
+.auth-link { color: #ff6b6b !important; }
+.link:hover,
+.auth-link:hover { color: #e63946 !important; }
+.link::after { background: linear-gradient(135deg, #ff6b6b 0%, #f87171 100%) !important; }
+
+.submit-btn,
+.next-btn,
+.chat-send,
+.post-btn,
+.save-btn,
+.start-quiz-btn,
+.create-post-btn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #f87171 100%) !important;
+  color: #fff !important;
+}
+
+.next-btn:hover:not(:disabled),
+.post-btn:hover:not(:disabled),
+.save-btn:hover:not(:disabled),
+.start-quiz-btn.active,
+.feature-link:hover,
+.create-post-btn:hover {
+  box-shadow: 0 10px 20px rgba(255, 107, 107, 0.35) !important;
+}
+
+.feature-link {
+  background: linear-gradient(45deg, #ff6b6b, #f87171) !important;
+  color: #fff !important;
+}
+
+.progress-fill { 
+  background: linear-gradient(90deg, #ff6b6b 0%, #f87171 100%) !important;
+  box-shadow: 0 1px 2px rgba(255, 107, 107, 0.3) !important;
+}
+
+.question-number { 
+  background: linear-gradient(135deg, #ff6b6b 0%, #f87171 100%) !important;
+  box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3) !important;
+}
+
+.choice-item:hover:not(.correct):not(.incorrect) {
+  border-color: #ff6b6b !important;
+  background: #fff5f5 !important;
+  box-shadow: 0 4px 8px rgba(255, 107, 107, 0.12) !important;
+}
+
+.choice-item.selected {
+  border-color: #ff6b6b !important;
+  background: #ffecec !important;
+  box-shadow: 0 4px 8px rgba(255, 107, 107, 0.2) !important;
+}
+
+.choice-item input[type="radio"] { accent-color: #ff6b6b !important; }
+.explanation { border-left: 4px solid #ff6b6b !important; }
+
+.nav-btn:hover:not(:disabled) {
+  border-color: #ff6b6b !important;
+  color: #e63946 !important;
+  box-shadow: 0 4px 8px rgba(255, 107, 107, 0.12) !important;
+}
+
+.selected-type-info { 
+  background: rgba(255, 107, 107, 0.05) !important; 
+  border: 1px solid rgba(255, 107, 107, 0.15) !important; 
+}
+.selected-type-info strong { color: #ff6b6b !important; }
+
+.loading-analysis .loading-spinner,
+.loading-container .loading-spinner,
+.admin-loading::after { border-top-color: #ff6b6b !important; }
+
+.chat-message.user .bubble { background: #ff6b6b !important; }
+.chat-input:focus { border-color: #ff6b6b !important; box-shadow: 0 0 0 4px rgba(255,107,107,0.15) !important; }
+
+.post-author .avatar { background: #ff6b6b !important; color: #ffffff !important; }
+.post-title-input:focus { border-color: #ff6b6b !important; box-shadow: 0 0 0 4px rgba(255,107,107,0.15) !important; }
+
+.nav-link:hover { background: #ffe5e5 !important; color: #e63946 !important; }
+.nav-link.active { 
+  background: linear-gradient(135deg, #ff6b6b 0%, #f87171 100%) !important; 
+  color: #fff !important; 
+  box-shadow: 0 6px 14px rgba(255, 107, 107, 0.25) !important;
+}
+.avatar { background: #ff6b6b !important; color: #ffffff !important; }
+.user-avatar, .user-avatar-large { background: #ff6b6b !important; color: #ffffff !important; }
+.chevron:hover { background: #ffe5e5 !important; }
+.user-header { background: linear-gradient(135deg, #ff6b6b 0%, #f87171 100%) !important; }
+
+.form-group input:focus,
+.role-select:focus { border-color: #ff6b6b !important; box-shadow: 0 0 0 3px rgba(255,107,107,0.15) !important; }
+.auth-button { background: linear-gradient(45deg, #ff6b6b, #f87171) !important; }
+.auth-button:hover:not(:disabled) { box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3) !important; }

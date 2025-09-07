@@ -30,7 +30,7 @@ body {
   padding: 0;
   min-height: 100vh;
   width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #ffffff;
 }
 
 #root {
@@ -40,12 +40,12 @@ body {
 
 a {
   font-weight: 500;
-  color: #667eea;
+  color: #ff6b6b;
   text-decoration: inherit;
 }
 
 a:hover {
-  color: #5a67d8;
+  color: #e63946;
 }
 
 h1 {
@@ -62,20 +62,20 @@ button {
   font-size: 1rem;
   font-weight: 600;
   font-family: inherit;
-  background-color: #667eea;
+  background-color: #ff6b6b;
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 button:hover {
-  background-color: #5a67d8;
+  background-color: #e63946;
   transform: translateY(-2px);
 }
 
 button:focus,
 button:focus-visible {
-  outline: 2px solid #667eea;
+  outline: 2px solid #ff6b6b;
   outline-offset: 2px;
 }
 
