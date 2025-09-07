@@ -17,7 +17,7 @@ export const ManageQuestionsPage: React.FC = () => {
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [formData, setFormData] = useState<QuestionFormData>({
     content: '',
-    type: 'easy',
+    type: 'ordinary',
     answers: [
       { id: 1, content: '' },
       { id: 2, content: '' },
@@ -61,7 +61,9 @@ export const ManageQuestionsPage: React.FC = () => {
       setEditingQuestion(question);
       setFormData({
         content: question.content,
-        type: question.type,
+        type: ((['science','stone','fantasy','ordinary'] as const).includes(question.type as any)
+          ? (question.type as QuestionType)
+          : 'ordinary'),
         answers: [...question.answers]
       });
     } else {
