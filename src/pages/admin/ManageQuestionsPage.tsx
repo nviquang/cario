@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Question } from '@/types';
+import { apiService } from '@/services/api';
+
+type QuestionType = 'science' | 'stone' | 'fantasy' | 'ordinary';
 
 interface QuestionFormData {
   content: string;
-  type: string;
+  type: QuestionType;
   answers: { id: number; content: string }[];
 }
 
 export const ManageQuestionsPage: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [selectedType, setSelectedType] = useState<QuestionType>('ordinary');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [formData, setFormData] = useState<QuestionFormData>({
@@ -23,39 +27,25 @@ export const ManageQuestionsPage: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  // Mock data cho demo
+  // Tải danh sách câu hỏi theo loại
   useEffect(() => {
-    const mockQuestions: Question[] = [
-      {
-        id: 1,
-        content: 'Thủ đô của Việt Nam là gì?',
-        type: 'easy',
-        answers: [
-          { id: 1, content: 'Hà Nội' },
-          { id: 2, content: 'TP.HCM' },
-          { id: 3, content: 'Đà Nẵng' },
-          { id: 4, content: 'Huế' }
-        ]
-      },
-      {
-        id: 2,
-        content: 'Việt Nam có bao nhiêu tỉnh thành?',
-        type: 'easy',
-        answers: [
-          { id: 5, content: '61' },
-          { id: 6, content: '62' },
-          { id: 7, content: '63' },
-          { id: 8, content: '64' }
-        ]
+    const load = async () => {
+      setIsLoading(true);
+      const res = await apiService.getQuestions(selectedType);
+      if (res.success && res.data) {
+        setQuestions(res.data);
+      } else {
+        setQuestions([]);
       }
-    ];
-    setQuestions(mockQuestions);
-  }, []);
+      setIsLoading(false);
+    };
+    load();
+  }, [selectedType]);
 
   const resetForm = () => {
     setFormData({
       content: '',
-      type: 'easy',
+      type: selectedType,
       answers: [
         { id: 1, content: '' },
         { id: 2, content: '' },
@@ -129,16 +119,19 @@ export const ManageQuestionsPage: React.FC = () => {
         // TODO: Gọi API cập nhật
         console.log('Cập nhật câu hỏi:', updatedQuestion);
       } else {
-        // Thêm câu hỏi mới
-        const newQuestion: Question = {
-          id: Date.now(),
-          ...formData
+        // Thêm câu hỏi mới qua API
+        const payload = {
+          content: formData.content,
+          type: formData.type,
+          answers: formData.answers.map(a => ({ content: a.content }))
         };
-        
-        setQuestions(prev => [...prev, newQuestion]);
-        
-        // TODO: Gọi API thêm mới
-        console.log('Thêm câu hỏi mới:', newQuestion);
+        const res = await apiService.createQuestion(payload as any);
+        if (!res.success) {
+          throw new Error(res.error || 'Không thể tạo câu hỏi');
+        }
+        // Reload danh sách
+        const refresh = await apiService.getQuestions(selectedType);
+        setQuestions(refresh.success && refresh.data ? refresh.data : []);
       }
       
       closeModal();
@@ -150,14 +143,16 @@ export const ManageQuestionsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (questionId: number) => {
+  const handleDelete = async (questionId: number | string) => {
     if (!confirm('Bạn có chắc chắn muốn xóa câu hỏi này?')) return;
 
     try {
-      // TODO: Gọi API xóa
-      console.log('Xóa câu hỏi:', questionId);
-      
-      setQuestions(prev => prev.filter(q => q.id !== questionId));
+      const res = await apiService.deleteQuestion(questionId);
+      if (!res.success) {
+        throw new Error(res.error || 'Không thể xóa câu hỏi');
+      }
+      const refresh = await apiService.getQuestions(selectedType);
+      setQuestions(refresh.success && refresh.data ? refresh.data : []);
     } catch (error) {
       console.error('Lỗi khi xóa câu hỏi:', error);
       alert('Có lỗi xảy ra khi xóa câu hỏi');
@@ -169,6 +164,15 @@ export const ManageQuestionsPage: React.FC = () => {
       <div className="admin-container">
         <div className="admin-header">
           <h1>Quản lý câu hỏi</h1>
+          <div style={{ margin: '12px 0' }}>
+            <label style={{ marginRight: 8, fontWeight: 600 }}>Chọn loại:</label>
+            <select value={selectedType} onChange={(e) => setSelectedType(e.target.value as QuestionType)}>
+              <option value="science">science</option>
+              <option value="stone">stone</option>
+              <option value="fantasy">fantasy</option>
+              <option value="ordinary">ordinary</option>
+            </select>
+          </div>
           <button 
             className="add-question-btn"
             onClick={() => openModal()}
@@ -179,14 +183,16 @@ export const ManageQuestionsPage: React.FC = () => {
 
         <div className="questions-table">
           <div className="table-header">
+            <div className="table-cell">ID</div>
             <div className="table-cell">Câu hỏi</div>
             <div className="table-cell">Lựa chọn</div>
-            <div className="table-cell">Đáp án</div>
+            <div className="table-cell">Loại</div>
             <div className="table-cell">Thao tác</div>
           </div>
           
           {questions.map(question => (
             <div key={question.id} className="table-row">
+              <div className="table-cell">{question.id}</div>
               <div className="table-cell question-text">
                 {question.content}
               </div>
@@ -197,9 +203,7 @@ export const ManageQuestionsPage: React.FC = () => {
                   </div>
                 ))}
               </div>
-              <div className="table-cell answer">
-                <span className="correct-answer">{question.answers[0]?.content}</span>
-              </div>
+              <div className="table-cell answer">{question.type}</div>
               <div className="table-cell actions">
                 <button 
                   className="edit-btn"
@@ -242,9 +246,10 @@ export const ManageQuestionsPage: React.FC = () => {
                   onChange={(e) => handleInputChange('type', e.target.value)}
                   required
                 >
-                  <option value="easy">Dễ</option>
-                  <option value="medium">Trung bình</option>
-                  <option value="hard">Khó</option>
+                  <option value="science">science</option>
+                  <option value="stone">stone</option>
+                  <option value="fantasy">fantasy</option>
+                  <option value="ordinary">ordinary</option>
                 </select>
               </div>
 

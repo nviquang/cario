@@ -84,7 +84,7 @@ class ApiService {
   }
 
   // Quiz API
-  async getQuestions(type: string = 'easy'): Promise<ApiResponse<Question[]>> {
+  async getQuestions(type: string = 'ordinary'): Promise<ApiResponse<Question[]>> {
     try {
       console.log('Getting questions with type:', type);
       
@@ -154,6 +154,60 @@ class ApiService {
         success: false,
         error: error instanceof Error ? error.message : 'Không thể lấy câu hỏi từ server',
       };
+    }
+  }
+
+  async createQuestion(payload: {
+    content: string;
+    type: 'science' | 'stone' | 'fantasy' | 'ordinary';
+    answers: Array<{ content: string }>;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const url = `${API_BASE_URL}/api/question/create`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        mode: 'cors',
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return { success: false, error: errorData.message || errorData.error || 'Tạo câu hỏi thất bại' };
+      }
+
+      const data = await response.json().catch(() => ({}));
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Không thể tạo câu hỏi' };
+    }
+  }
+
+  async deleteQuestion(id: string | number): Promise<ApiResponse<any>> {
+    try {
+      const url = `${API_BASE_URL}/api/question/delete/${id}`;
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+        },
+        mode: 'cors',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return { success: false, error: errorData.message || errorData.error || 'Xóa câu hỏi thất bại' };
+      }
+
+      const data = await response.json().catch(() => ({}));
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Không thể xóa câu hỏi' };
     }
   }
 
