@@ -19,4 +19,7 @@ export default defineConfig({
       '@/assets': path.resolve(__dirname, './src/assets'),
     },
   },
+  preview: {
+    allowedHosts: ['cario-production.up.railway.app'],
+  },
 })
