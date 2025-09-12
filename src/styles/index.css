@@ -55,6 +55,75 @@ h1 {
   color: #1f2937;
 }
 
+/* Community header styles: center text and make title black */
+.community-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px 0;
+}
+
+.community-title {
+  color: #000000; /* black */
+}
+
+.community-description {
+  color: #6b7280;
+  font-size: 1.1rem;
+  margin-top: 8px;
+}
+
+.group-header-card {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  background: rgba(255,255,255,0.95);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  margin-bottom: 12px;
+}
+
+.group-header-card .group-avatar img {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.group-header-card .group-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.group-header-card .group-description {
+  margin: 4px 0 0 0;
+  color: #6b7280;
+}
+
+.create-post-card {
+  background: rgba(255,255,255,0.95);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.post-title-input, .post-content-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.create-post-card .post-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 button {
   border-radius: 12px;
   border: 1px solid transparent;

@@ -5,6 +5,7 @@ import { RegisterPage } from '@/pages/RegisterPage';
 import { HomePage } from '@/pages/HomePage';
 import { ChatbotPage } from '@/pages/ChatbotPage';
 import { ForumPage } from '@/pages/ForumPage';
+import { CommunityPage } from '@/pages/CommunityPage';
 import { QuizGatePage } from '@/pages/QuizGatePage';
 import { QuizPage } from '@/pages/QuizPage';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
@@ -60,6 +61,7 @@ function App() {
           <Route path="/quiz" element={<QuizGatePage />} />
           <Route path="/quiz/start" element={<QuizPage />} />
           <Route path="/forum" element={<ForumPage />} />
+          <Route path="/community" element={<CommunityPage />} />
           <Route path="/chatbot" element={<ChatbotPage />} />
         </Route>
 

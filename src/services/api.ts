@@ -5,10 +5,35 @@ const API_BASE_URL = 'https://gametientri-production.up.railway.app';
 const CHATBOT_API_URL = 'https://pivot-production.up.railway.app';
 const ANALYSIS_API_URL = 'https://apigeminiendpoint-production.up.railway.app';
 
+// Community API endpoints
+export const COMMUNITY_API = {
+  searchGroups: (query: string, username?: string) => {
+  const params = new URLSearchParams();
+  const trimmed = (query ?? '').trim();
+  if (trimmed.length > 0) params.set('name', trimmed);
+  if (username) params.set('username', username);
+  const qs = params.toString();
+  const endpoint = qs ? `/group/get/all?${qs}` : '/group/get/all';
+  console.log('Community API - searchGroups URL:', `${API_BASE_URL}${endpoint}`);
+  return endpoint;
+  },
+  getUserGroups: (username: string) => {
+    const endpoint = `/group/get/by-user?username=${username}`;
+    console.log('Community API - getUserGroups URL:', `${API_BASE_URL}${endpoint}`);
+    return endpoint;
+  },
+  getGroupPosts: (groupId: string) => {
+  const endpoint = `/api/posts/get/by-group?groupId=${groupId}`;
+    console.log('Community API - getGroupPosts URL:', `${API_BASE_URL}${endpoint}`);
+    return endpoint;
+  },
+};
+
 class ApiService {
-  private async request<T>(
+  async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    methodName?: string
   ): Promise<ApiResponse<T>> {
     const url = `${API_BASE_URL}${endpoint}`;
     
@@ -37,19 +62,33 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      
+
+      // Try to parse JSON body (if any)
+      const parsed = await response.json().catch(() => null);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        // Log HTTP error with context
+        console.error(`API HTTP error${methodName ? ` [${methodName}]` : ''} - URL: ${url}`, parsed || { status: response.status, statusText: response.statusText });
+        // If parsed contains message/error, include it
+        const msg = parsed && (parsed.message || parsed.error) ? (parsed.message || parsed.error) : `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(msg);
       }
-      
-      const data = await response.json();
-      return {
-        success: true,
-        data: data, // Trả về data trực tiếp, không cố gắng parse data.data
-      };
+
+      // If API returns wrapped format { success: boolean, data: ... }
+      if (parsed && typeof parsed === 'object' && 'success' in parsed) {
+        const wrapped: any = parsed;
+        if (!wrapped.success) {
+          // Log full raw response for debugging
+          console.error(`API returned success=false${methodName ? ` [${methodName}]` : ''} - URL: ${url}`, wrapped);
+          return { success: false, error: wrapped.error || wrapped.message || 'API returned unsuccessful response' };
+        }
+        return { success: true, data: wrapped.data as T };
+      }
+
+      // Otherwise return parsed value as data
+      return { success: true, data: parsed as T };
     } catch (error) {
-      console.error('API Error:', error);
+      console.error(`API Error${methodName ? ` [${methodName}]` : ''} - URL: ${url}`, error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Có lỗi xảy ra khi kết nối đến server',
@@ -399,6 +438,35 @@ class ApiService {
         success: false,
         error: error instanceof Error ? error.message : 'Không thể tạo bài viết',
       };
+    }
+  }
+
+  async createPostInGroup(payload: { title: string; content: string; type: string; groupId: number | string }): Promise<ApiResponse<any>> {
+    try {
+      const url = `${API_BASE_URL}/api/posts/create`;
+      console.log('Creating group post at:', url, 'with payload:', payload);
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        mode: 'cors',
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        console.error('Failed to create group post:', data);
+        return { success: false, error: data.message || data.error || `HTTP ${response.status}: ${response.statusText}` };
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Create Group Post API Error:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Không thể tạo bài viết trong nhóm' };
     }
   }
 
