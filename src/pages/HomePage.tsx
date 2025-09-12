@@ -88,8 +88,8 @@ export const HomePage: React.FC = () => {
           <div className="info-card">
             <h3>Hỗ trợ khách hàng</h3>
             <ul>
-              <li>✉️ Email: nguyenquang5010@gmail.com</li>
-              <li>📞 Số điện thoại: 113</li>
+              <li>✉️ Email: khoaai@ptit.edu.vn</li>
+              <li>📞 Số điện thoại: 0248888888</li>
               <li>🕒 Hỗ trợ 24/7</li>
             </ul>
           </div>
