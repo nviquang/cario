@@ -20,33 +20,47 @@ const CommunityPageContent: React.FC = () => {
   const { selectedGroup, setError } = useCommunity();
 
   const validateGroups = (groups: unknown): Group[] => {
-    if (!Array.isArray(groups)) {
-      console.warn('Groups data is not an array:', groups);
+    // Support multiple shapes: array of raw groups, { groups: [] }, { data: [] }, or a single group object.
+    const normalizeList = (raw: any): any[] => {
+      if (!raw) return [];
+      if (Array.isArray(raw)) return raw;
+      if (Array.isArray(raw.groups)) return raw.groups;
+      if (Array.isArray(raw.data)) return raw.data;
+      // Single object -> wrap into array
+      if (typeof raw === 'object') return [raw];
       return [];
+    };
+
+    const rawList = normalizeList(groups as any);
+
+    const mapped: Group[] = rawList.map((raw) => {
+      const idRaw = raw?.id ?? raw?._id ?? raw?.groupId;
+      const id = typeof idRaw === 'number' ? idRaw : (typeof idRaw === 'string' && idRaw.trim() !== '' && !isNaN(Number(idRaw)) ? Number(idRaw) : NaN);
+
+      const name = raw?.name ?? raw?.title ?? '';
+      const description = raw?.description ?? raw?.desc ?? '';
+      const isPrivate = typeof raw?.isPrivate === 'boolean' ? raw.isPrivate : Boolean(raw?.private ?? false);
+      const createdAt = raw?.createdAt ?? raw?.created_at ?? new Date().toISOString();
+      const userRole = raw?.userRole ?? raw?.role ?? null;
+      const countUserJoin = Number(raw?.countUserJoin ?? raw?.countUser ?? raw?.members ?? 0) || 0;
+
+      return {
+        id: id,
+        name: String(name),
+        description: typeof description === 'string' ? description : String(description ?? ''),
+        isPrivate: Boolean(isPrivate),
+        createdAt: String(createdAt),
+        userRole: userRole === undefined ? null : String(userRole),
+        countUserJoin: Number(countUserJoin),
+      } as Group;
+    }).filter((g) => Number.isFinite(g.id) && typeof g.name === 'string');
+
+    // Log if mapping removed items
+    if (rawList.length > 0 && mapped.length === 0) {
+      console.error('All groups failed mapping/validation. Sample raw:', JSON.stringify(rawList[0], null, 2));
     }
-    
-    return groups.filter((group): group is Group => {
-      const isValid = 
-        typeof group === 'object' &&
-        group !== null &&
-        // API provides numeric id
-        (typeof (group as any).id === 'number' || typeof (group as any).id === 'string') &&
-        typeof group.name === 'string' &&
-        // description may be empty or omitted
-        (typeof (group as any).description === 'string' || typeof (group as any).description === 'undefined') &&
-        typeof group.isPrivate === 'boolean' &&
-        typeof group.createdAt === 'string' &&
-        // accept lowercase roles like 'admin' or 'member' or null
-        ((group as any).userRole === null || typeof (group as any).userRole === 'string') &&
-        // API field is countUserJoin
-        typeof (group as any).countUserJoin === 'number';
-      
-      if (!isValid) {
-  console.warn('Invalid group data:', JSON.stringify(group, null, 2));
-      }
-      
-      return isValid;
-    });
+
+    return mapped;
   };
 
   const validatePosts = (posts: unknown): Post[] => {
@@ -192,21 +206,21 @@ const CommunityPageContent: React.FC = () => {
         throw new Error(response.error || 'Failed to fetch user groups');
       }
       
-      if (!Array.isArray(response.data)) {
-        throw new Error('Invalid response format: groups array not found');
-      }
+      const raw = response.data;
+      if (!raw) {
+        console.warn('getUserGroups returned empty data:', response);
+        setGroups([]);
+      } else {
+        const validatedGroups = validateGroups(raw as unknown);
+        console.log('Validated groups:', validatedGroups);
 
-      const validatedGroups = validateGroups(response.data as Group[]);
-      console.log('Validated groups:', validatedGroups);
-      
-      if (validatedGroups.length === 0 && response.data.length > 0) {
-        console.error('All groups failed validation. Sample group:', 
-          JSON.stringify(response.data[0], null, 2)
-        );
-        throw new Error('Failed to validate any groups from the response');
+        if (validatedGroups.length === 0) {
+          console.error('Failed to validate any groups from response. Raw data sample:', JSON.stringify(raw, null, 2));
+          throw new Error('Failed to validate any groups from the response');
+        }
+
+        setGroups(validatedGroups);
       }
-      
-      setGroups(validatedGroups);
     } catch (error) {
       handleApiError(error, 'Error fetching user groups');
       setGroups([]);
@@ -333,6 +347,7 @@ const CommunityPageContent: React.FC = () => {
 
       {selectedGroup && (
         <div className="create-post-card">
+          <h3 className="create-post-title">Tạo bài viết</h3>
           <input
             className="post-title-input"
             placeholder="Tiêu đề..."
@@ -344,7 +359,7 @@ const CommunityPageContent: React.FC = () => {
             placeholder="Nội dung..."
             value={newPostContent}
             onChange={(e) => setNewPostContent(e.target.value)}
-            rows={4}
+            style={{ height: '120px' }}
           />
           <div className="post-actions">
             <button onClick={handleCreateGroupPost} disabled={isCreatingPost || !newPostTitle.trim() || !newPostContent.trim()}>
@@ -354,7 +369,7 @@ const CommunityPageContent: React.FC = () => {
         </div>
       )}
 
-      <GroupPosts posts={posts} isLoading={isLoadingPosts} />
+  <GroupPosts posts={posts} isLoading={isLoadingPosts} onReload={fetchGroupPosts} />
     </div>
   );
 
@@ -362,9 +377,11 @@ const CommunityPageContent: React.FC = () => {
     <CommunityLayout
       sidebar={
         <>
-          <GroupSearchCard onSearch={searchGroups} isLoading={isLoadingGroups} />
-          <GroupList groups={groups} isLoading={isLoadingGroups} />
-        </>
+            <div className="sidebar-search-section">
+              <GroupSearchCard onSearch={searchGroups} isLoading={isLoadingGroups} />
+            </div>
+            <GroupList groups={groups} isLoading={isLoadingGroups} />
+          </>
       }
       content={contentNode}
     />

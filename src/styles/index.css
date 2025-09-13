@@ -119,6 +119,15 @@ h1 {
   margin-bottom: 8px;
 }
 
+/* Titles inside search and create-post cards */
+.search-card-title,
+.create-post-title {
+  margin: 0 0 20px 0; /* 20px bottom spacing */
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
 .create-post-card .post-actions {
   display: flex;
   justify-content: flex-end;
@@ -158,8 +167,141 @@ input, textarea, select {
   font-family: inherit;
   font-size: 1rem;
   color: #1f2937;
+  resize: none;
 }
 
 input::placeholder {
   color: #9ca3af;
+}
+
+/* Search input with left icon */
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input-wrapper .search-icon {
+  position: absolute;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.search-input {
+  padding-left: 36px; /* leave space for icon */
+  width: 100%;
+}
+
+/* Post menu (three-dot) */
+.post-menu-container {
+  position: relative;
+}
+
+.post-menu-button {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: #111827; /* black-ish */
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.post-menu-button:focus,
+.post-menu-button:focus-visible {
+  outline: 2px solid rgba(17,24,39,0.12); /* subtle outline */
+  outline-offset: 2px;
+}
+
+.post-menu {
+  position: absolute;
+  right: 0;
+  top: 28px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px; /* ✅ Nhỏ hơn */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* ✅ Nhẹ hơn */
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 2px; /* ✅ Khoảng cách nhỏ hơn */
+  padding: 4px; /* ✅ Padding nhỏ hơn */
+  min-width: 100px; /* ✅ Rộng vừa đủ */
+}
+
+.post-menu .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* ✅ Khoảng cách icon và chữ nhỏ hơn */
+  background: transparent;
+  border: none;
+  padding: 4px 6px; /* ✅ Padding nhỏ hơn */
+  cursor: pointer;
+  color: #111827;
+  font-size: 0.75rem; /* ✅ Chữ nhỏ hơn */
+  width: 100%;
+  text-align: left;
+  white-space: nowrap; /* ✅ Quan trọng: không cho chữ xuống dòng */
+}
+
+.post-menu .menu-item-icon {
+  width: 12px; /* ✅ Icon nhỏ hơn */
+  height: 12px;
+  flex-shrink: 0; /* ✅ Không cho icon co lại */
+}
+
+.post-menu .menu-item-text {
+  white-space: nowrap; /* ✅ Không cho chữ xuống dòng */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.post-menu .menu-item:hover {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.menu-item-icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+}
+
+.menu-item-text {
+  display: inline-block;
+  line-height: 1;
+}
+
+.post-edit-form .post-actions button {
+  margin-left: 8px;
+}
+
+/* Modal backdrop and card */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 24px;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 720px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+  padding: 18px;
+}
+
+/* Ensure modal internal card uses the create-post look */
+.modal-card .create-post-card {
+  padding: 12px;
+  background: transparent;
 }

@@ -470,7 +470,7 @@ class ApiService {
     }
   }
 
-  async updatePost(payload: { title: string; content: string; id: number | string }): Promise<ApiResponse<any>> {
+  async updatePost(payload: { id: number | string; title: string; content: string; groupId?: number | string }): Promise<ApiResponse<any>> {
     try {
       const url = `${API_BASE_URL}/api/posts/update`;
       const response = await fetch(url, {

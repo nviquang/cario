@@ -24,13 +24,18 @@ export const GroupSearchCard: React.FC<GroupSearchCardProps> = ({
     setQuery(e.target.value);
   };
 
-  // Keep references to these values so TS/lint don't complain while the input
-  // is temporarily hidden. No runtime effect.
+  // Keep references to these values so TS/lint don't complain. No runtime effect.
   void isLoading;
   void handleSearchChange;
 
-  // debounce the API call when `query` changes
+  // IMPORTANT: API calls from the search input are disabled for now.
+  // To re-enable, set `disableApiCalls` to false and ensure `onSearch` is provided.
+  const disableApiCalls = true;
+
+  // debounce the API call when `query` changes — gated by disableApiCalls
   useEffect(() => {
+    if (disableApiCalls) return;
+
     const id = window.setTimeout(() => {
       // call the latest onSearch with the current query value
       latestOnSearch.current(query);
@@ -39,19 +44,29 @@ export const GroupSearchCard: React.FC<GroupSearchCardProps> = ({
     return () => {
       window.clearTimeout(id);
     };
-  }, [query]);
+  }, [query, disableApiCalls]);
 
   return (
     <div className="search-card">
-      <input
-        type="text"
-        className="search-input"
-        placeholder="Tìm kiếm nhóm..."
-        value={query}
-        onChange={handleSearchChange}
-        disabled={isLoading}
-        aria-label="Tìm kiếm nhóm"
-      />
+      <h3 className="search-card-title">Tìm kiếm cộng đồng</h3>
+      <div className="search-input-wrapper">
+        <span className="search-icon" aria-hidden="true">
+          {/* Inline magnifying glass SVG */}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M21 21l-4.35-4.35" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="11" cy="11" r="6" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <input
+          type="text"
+          className="search-input"
+          placeholder="Tìm kiếm nhóm..."
+          value={query}
+          onChange={handleSearchChange}
+          disabled={isLoading}
+          aria-label="Tìm kiếm nhóm"
+        />
+      </div>
     </div>
   );
 };
