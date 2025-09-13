@@ -301,6 +301,18 @@ const CommunityPageContent: React.FC = () => {
   const [newPostContent, setNewPostContent] = useState('');
   const [isCreatingPost, setIsCreatingPost] = useState(false);
 
+  // Create group modal state
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupDescription, setNewGroupDescription] = useState('');
+  const [newGroupIsPrivate, setNewGroupIsPrivate] = useState(false);
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+
+  // Group delete state
+  const [showDeleteGroupModal, setShowDeleteGroupModal] = useState(false);
+  const [groupToDelete, setGroupToDelete] = useState<Group | null>(null);
+  const [isDeletingGroup, setIsDeletingGroup] = useState(false);
+
   const handleCreateGroupPost = async () => {
     if (!selectedGroup) return;
     if (!newPostTitle.trim() || !newPostContent.trim() || isCreatingPost) return;
@@ -331,19 +343,81 @@ const CommunityPageContent: React.FC = () => {
     }
   };
 
+  const handleCreateGroup = async () => {
+    setIsCreatingGroup(true);
+    setError(null);
+    try {
+      const payload = {
+        name: newGroupName.trim(),
+        description: newGroupDescription.trim(),
+        isPrivate: Boolean(newGroupIsPrivate),
+      };
+
+      const res = await apiService.request<any>('/group/create', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }, 'createGroup');
+
+      if (!res.success) throw new Error(res.error || 'Failed to create group');
+
+      // close modal and reset
+      setShowCreateGroupModal(false);
+      setNewGroupName('');
+      setNewGroupDescription('');
+      setNewGroupIsPrivate(false);
+
+      // reload groups
+      await fetchUserGroups();
+    } catch (err) {
+      handleApiError(err, 'Error creating group');
+    } finally {
+      setIsCreatingGroup(false);
+    }
+  };
+
   const contentNode = (
     <div>
-      {selectedGroup && (
-        <div className="group-header-card">
-          <div className="group-avatar">
-            <img src={logo} alt={selectedGroup.name} />
+      {selectedGroup && (() => {
+        // compute ownership debug info once
+        const currentUsername = localStorage.getItem('username') || '';
+        console.log('DEBUG - selectedGroup (community header):', selectedGroup);
+        console.log('DEBUG - currentUsername:', currentUsername);
+
+        // API shapes vary: check common fields
+        const creatorObj = (selectedGroup as any).creator || (selectedGroup as any).createdBy || null;
+        const creatorUsername = creatorObj?.username ?? creatorObj ?? null;
+        const isCreator = creatorUsername === currentUsername || selectedGroup.userRole === 'owner' || (selectedGroup as any).owner === currentUsername;
+
+        console.log('DEBUG - ownership check:', { creatorObj, creatorUsername, userRole: selectedGroup.userRole, isCreator });
+
+        return (
+          <div className="group-header-card" style={{ position: 'relative' }}>
+            <div className="group-avatar">
+              <img src={logo} alt={selectedGroup.name} />
+            </div>
+            <div className="group-info">
+              <h2 className="group-name">{selectedGroup.name}</h2>
+              <p className="group-description">{selectedGroup.description || 'Không có mô tả'}</p>
+            </div>
+
+            {isCreator && (
+              <div style={{ position: 'absolute', right: 12, top: 12, zIndex: 80 }}>
+                <button
+                  className="group-header-menu-button"
+                  aria-haspopup="true"
+                  aria-label="Group actions"
+                  onClick={() => {
+                    setGroupToDelete(selectedGroup);
+                    setShowDeleteGroupModal(true);
+                  }}
+                >
+                  ⋯
+                </button>
+              </div>
+            )}
           </div>
-          <div className="group-info">
-            <h2 className="group-name">{selectedGroup.name}</h2>
-            <p className="group-description">{selectedGroup.description || 'Không có mô tả'}</p>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {selectedGroup && (
         <div className="create-post-card">
@@ -374,17 +448,86 @@ const CommunityPageContent: React.FC = () => {
   );
 
   return (
-    <CommunityLayout
-      sidebar={
-        <>
-            <div className="sidebar-search-section">
-              <GroupSearchCard onSearch={searchGroups} isLoading={isLoadingGroups} />
+    <>
+      <CommunityLayout
+        sidebar={
+          <>
+              <div className="sidebar-search-section">
+                <GroupSearchCard onSearch={searchGroups} isLoading={isLoadingGroups} />
+              </div>
+              {/* Create group card below search */}
+              <div className="create-group-card" style={{ marginTop: 12, padding: 12, background: 'rgba(255,255,255,0.95)', borderRadius: 12 }}>
+                <button onClick={() => setShowCreateGroupModal(true)} style={{ width: '100%', padding: '10px 12px', borderRadius: 8, background: '#10b981', color: 'white', border: 'none', fontWeight: 700 }}>
+                  + Tạo nhóm
+                </button>
+              </div>
+
+              <GroupList groups={groups} isLoading={isLoadingGroups} onReload={fetchUserGroups} />
+            </>
+        }
+        content={contentNode}
+      />
+
+      {/* Create Group Modal */}
+      {showCreateGroupModal && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="modal-card">
+            <h3 className="create-post-title">Tạo nhóm mới</h3>
+            <div className="create-post-card">
+              <input className="post-title-input" placeholder="Tên nhóm" value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} />
+              <textarea className="post-content-input" placeholder="Mô tả" value={newGroupDescription} onChange={(e) => setNewGroupDescription(e.target.value)} style={{ minHeight: 120 }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <label style={{ fontWeight: 600 }}>Riêng tư</label>
+                <input type="checkbox" checked={newGroupIsPrivate} onChange={(e) => setNewGroupIsPrivate(e.target.checked)} />
+              </div>
+              <div className="post-actions">
+                <button onClick={handleCreateGroup} disabled={isCreatingGroup || !newGroupName.trim()}>{isCreatingGroup ? 'Đang tạo...' : 'Tạo nhóm'}</button>
+                <button onClick={() => setShowCreateGroupModal(false)}>Hủy</button>
+              </div>
             </div>
-            <GroupList groups={groups} isLoading={isLoadingGroups} />
-          </>
-      }
-      content={contentNode}
-    />
+          </div>
+        </div>
+      )}
+
+      {/* Delete Group Confirmation Modal */}
+      {showDeleteGroupModal && groupToDelete && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="modal-card">
+            <h3 className="create-post-title">Xác nhận xóa nhóm</h3>
+            <div className="create-post-card">
+              <p>Bạn chắc chắn muốn xóa nhóm "{groupToDelete.name}"? Hành động này không thể hoàn tác.</p>
+              <div className="post-actions">
+                <button
+                  onClick={async () => {
+                    if (!groupToDelete) return;
+                    setIsDeletingGroup(true);
+                    try {
+                      const res = await apiService.request<any>(`/group/delete/${groupToDelete.id}`, { method: 'DELETE' }, 'deleteGroup');
+                      if (!res.success) throw new Error(res.error || 'Failed to delete group');
+
+                      // close modal
+                      setShowDeleteGroupModal(false);
+                      setGroupToDelete(null);
+
+                      // reload groups
+                      await fetchUserGroups();
+                    } catch (err) {
+                      setError(err instanceof Error ? err : new Error(String(err)));
+                    } finally {
+                      setIsDeletingGroup(false);
+                    }
+                  }}
+                  disabled={isDeletingGroup}
+                >
+                  {isDeletingGroup ? 'Đang xóa...' : 'Xác nhận'}
+                </button>
+                <button onClick={() => { setShowDeleteGroupModal(false); setGroupToDelete(null); }}>Hủy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

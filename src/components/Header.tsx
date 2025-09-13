@@ -110,6 +110,12 @@ export const Header: React.FC = () => {
               >
                 Diễn đàn
               </Link>
+              <Link 
+                to="/community" 
+                className={`nav-link ${isActive('/community') ? 'active' : ''}`}
+              >
+                Cộng đồng
+              </Link>
             </>
           )}
         </nav>

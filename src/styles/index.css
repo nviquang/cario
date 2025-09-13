@@ -65,6 +65,13 @@ h1 {
   padding: 16px 0;
 }
 
+.community-header-card {
+  background: #fff7e6;
+  padding: 12px;
+  border-radius: 12px;
+  width: 100%;
+}
+
 .community-title {
   color: #000000; /* black */
 }
@@ -79,11 +86,16 @@ h1 {
   display: flex;
   gap: 16px;
   align-items: center;
-  background: rgba(255,255,255,0.95);
+  background: #fff7e6;
   padding: 16px;
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
   margin-bottom: 12px;
+}
+
+/* Ensure header card is the positioning context for absolute controls */
+.group-header-card {
+  position: relative;
 }
 
 .group-header-card .group-avatar img {
@@ -105,7 +117,7 @@ h1 {
 }
 
 .create-post-card {
-  background: rgba(255,255,255,0.95);
+  background: #fff7e6;
   padding: 12px;
   border-radius: 12px;
   margin-bottom: 12px;
@@ -216,6 +228,45 @@ input::placeholder {
   outline-offset: 2px;
 }
 
+/* Group header small three-dot button */
+.group-header-menu-button {
+  background: transparent;
+  border: 1px solid rgba(17,24,39,0.06);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  color: #111827;
+}
+
+.group-header-menu-button:focus,
+.group-header-menu-button:focus-visible {
+  outline: 2px solid rgba(17,24,39,0.12); /* subtle, not red */
+  outline-offset: 2px;
+}
+
+.group-header-menu-button {
+  z-index: 80;
+}
+
+/* Per-group item menu button */
+.group-item-menu-button {
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.9);
+  color: #000000;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.group-item-menu-button:focus,
+.group-item-menu-button:focus-visible {
+  outline: 2px solid rgba(17,24,39,0.12);
+  outline-offset: 2px;
+}
+
 .post-menu {
   position: absolute;
   right: 0;
@@ -277,6 +328,16 @@ input::placeholder {
 
 .post-edit-form .post-actions button {
   margin-left: 8px;
+}
+
+/* Apply card background across community cards */
+.sidebar-search-section .search-input-wrapper,
+.group-card,
+.post-card,
+.create-post-card,
+.create-group-card,
+.modal-card .create-post-card {
+  background: #fff7e6;
 }
 
 /* Modal backdrop and card */
