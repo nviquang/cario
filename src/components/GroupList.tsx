@@ -34,6 +34,19 @@ export const GroupList: React.FC<GroupListProps> = ({ groups, isLoading, onReloa
     }
   };
 
+
+  // If there are no groups at all, show a friendly empty message first
+  if (!groups || groups.length === 0) {
+    return (
+      <div className="group-card">
+        <div className="empty-state">
+          <p>Bạn chưa tham gia nhóm nào</p>
+          <p className="hint">Hãy tạo hoặc tìm nhóm để tham gia</p>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="group-card">
@@ -56,16 +69,7 @@ export const GroupList: React.FC<GroupListProps> = ({ groups, isLoading, onReloa
     );
   }
 
-  if (groups.length === 0) {
-    return (
-      <div className="group-card">
-        <div className="empty-state">
-          <p>Không tìm thấy nhóm nào</p>
-          <p className="hint">Thử tìm kiếm với từ khóa khác</p>
-        </div>
-      </div>
-    );
-  }
+  // groups guaranteed non-empty here; render list below
 
   return (
     <div className="group-card">

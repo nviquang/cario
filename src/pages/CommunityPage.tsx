@@ -167,8 +167,9 @@ const CommunityPageContent: React.FC = () => {
       const validatedGroups = validateGroups(rawGroups);
 
       if (validatedGroups.length === 0 && rawGroups.length > 0) {
-        console.error('All groups failed validation. Sample group:', JSON.stringify(rawGroups[0], null, 2));
-        throw new Error('Failed to validate any groups from the response');
+        console.warn('All groups failed validation. Sample group:', JSON.stringify(rawGroups[0], null, 2));
+        setGroups([]);
+        return;
       }
 
       console.log('Validated', validatedGroups.length, 'out of', rawGroups.length, 'groups.');
@@ -215,9 +216,11 @@ const CommunityPageContent: React.FC = () => {
         console.log('Validated groups:', validatedGroups);
 
         if (validatedGroups.length === 0) {
-          console.error('Failed to validate any groups from response. Raw data sample:', JSON.stringify(raw, null, 2));
-          throw new Error('Failed to validate any groups from the response');
+          console.warn('Không validate được group nào, setGroups([]) để UI trống thay vì báo lỗi');
+          setGroups([]);
+          return;
         }
+
 
         setGroups(validatedGroups);
       }
