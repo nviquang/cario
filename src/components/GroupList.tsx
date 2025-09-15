@@ -71,10 +71,16 @@ export const GroupList: React.FC<GroupListProps> = ({ groups, isLoading, onReloa
 
   // groups guaranteed non-empty here; render list below
 
+  const renderRoleLabel = (role: string | null) => {
+    if (!role) return '';
+    return String(role).charAt(0).toUpperCase() + String(role).slice(1);
+  };
+
   return (
     <div className="group-card">
       {groups.map((group) => {
-        const isOwner = (group as any).creator?.username === currentUsername || group.userRole === 'owner' || (group as any).creator === currentUsername;
+  const roleLower = (group.userRole || '').toLowerCase();
+  const isOwner = (group as any).creator?.username === currentUsername || roleLower === 'owner' || roleLower === 'admin' || (group as any).creator === currentUsername;
         return (
           <div
             key={group.id}
@@ -86,7 +92,7 @@ export const GroupList: React.FC<GroupListProps> = ({ groups, isLoading, onReloa
               {group.isPrivate && <LockIcon className="group-icon" />}
               <h3 className="group-name">{group.name}</h3>
               <span className={`group-role ${group.userRole}`}>
-                {group.userRole}
+                {renderRoleLabel(group.userRole)}
               </span>
             </div>
 
@@ -117,7 +123,6 @@ export const GroupList: React.FC<GroupListProps> = ({ groups, isLoading, onReloa
             )}
 
             <p className="group-meta">
-              <span>{(group as any).countUserJoin} thành viên</span>
               {group.description && <span>{group.description}</span>}
             </p>
 

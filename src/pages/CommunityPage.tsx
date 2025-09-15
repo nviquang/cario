@@ -41,7 +41,20 @@ const CommunityPageContent: React.FC = () => {
       const description = raw?.description ?? raw?.desc ?? '';
       const isPrivate = typeof raw?.isPrivate === 'boolean' ? raw.isPrivate : Boolean(raw?.private ?? false);
       const createdAt = raw?.createdAt ?? raw?.created_at ?? new Date().toISOString();
-      const userRole = raw?.userRole ?? raw?.role ?? null;
+      // Determine userRole: prefer explicit userRole from API, else infer from creator
+      const explicitRole = raw?.userRole ?? raw?.role ?? null;
+      const creatorObj = raw?.creator ?? raw?.createdBy ?? raw?.owner ?? null;
+      const creatorUsername = creatorObj && typeof creatorObj === 'object' ? (creatorObj.username ?? creatorObj.userName ?? null) : creatorObj;
+      const currentUsername = localStorage.getItem('username') || '';
+      let userRole = explicitRole ?? null;
+      // If no explicit role from API, infer: creator -> 'admin', else 'member'
+      if (userRole === null || userRole === undefined) {
+        if (creatorUsername && String(creatorUsername) === currentUsername) {
+          userRole = 'admin';
+        } else {
+          userRole = 'member';
+        }
+      }
       const countUserJoin = Number(raw?.countUserJoin ?? raw?.countUser ?? raw?.members ?? 0) || 0;
 
       return {
@@ -50,7 +63,7 @@ const CommunityPageContent: React.FC = () => {
         description: typeof description === 'string' ? description : String(description ?? ''),
         isPrivate: Boolean(isPrivate),
         createdAt: String(createdAt),
-        userRole: userRole === undefined ? null : String(userRole),
+  userRole: userRole === undefined || userRole === null ? null : String(userRole),
         countUserJoin: Number(countUserJoin),
       } as Group;
     }).filter((g) => Number.isFinite(g.id) && typeof g.name === 'string');
@@ -183,49 +196,76 @@ const CommunityPageContent: React.FC = () => {
     }
   };
 
-  const fetchUserGroups = async () => {
+  // Fetch groups to show in the sidebar. If a username exists in localStorage
+  // we fetch that user's groups (joined/owned). If no username is present
+  // (visitor / not logged in) we fetch public groups via the search/all endpoint
+  // so that everyone can see public groups.
+  const fetchGroups = async () => {
     setIsLoadingGroups(true);
     setError(null);
-    
+
     const currentUsername = localStorage.getItem('username');
-    if (!currentUsername) {
-      setError(new Error('No username found in local storage'));
-      setIsLoadingGroups(false);
-      return;
-    }
-    
     try {
-      const response = await apiService.request<Group[]>(
-        COMMUNITY_API.getUserGroups(currentUsername),
+      // Always fetch public/all groups so visitors and other users can discover groups
+      const allGroupsRes = await apiService.request<any>(
+        COMMUNITY_API.searchGroups('', undefined as any),
         {},
-        'getUserGroups'
+        'searchAllGroups'
       );
-      
-      console.log('Raw API response:', JSON.stringify(response, null, 2));
-      
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to fetch user groups');
+
+      let userGroupsRes = null;
+      if (currentUsername) {
+        userGroupsRes = await apiService.request<any>(
+          COMMUNITY_API.getUserGroups(currentUsername),
+          {},
+          'getUserGroups'
+        );
       }
-      
-      const raw = response.data;
-      if (!raw) {
-        console.warn('getUserGroups returned empty data:', response);
+
+      if (!allGroupsRes.success) {
+        console.warn('Failed to fetch all/public groups:', allGroupsRes.error);
+      }
+
+      if (userGroupsRes && !userGroupsRes.success) {
+        console.warn('Failed to fetch user groups:', userGroupsRes.error);
+      }
+
+      // normalize raw arrays from responses
+      const normalize = (raw: any): any[] => {
+        if (!raw) return [];
+        if (Array.isArray(raw)) return raw;
+        if (Array.isArray(raw.groups)) return raw.groups;
+        if (Array.isArray(raw.data)) return raw.data;
+        return [];
+      };
+
+      const allRaw = normalize(allGroupsRes.data);
+      const userRaw = normalize(userGroupsRes?.data);
+
+      // Merge and dedupe by id (favor userRaw entries for richer metadata)
+      const byId = new Map<number, any>();
+      [...allRaw, ...userRaw].forEach((g: any) => {
+        const idRaw = g?.id ?? g?._id ?? g?.groupId;
+        const id = typeof idRaw === 'number' ? idRaw : (typeof idRaw === 'string' && idRaw.trim() !== '' && !isNaN(Number(idRaw)) ? Number(idRaw) : NaN);
+        if (!Number.isFinite(id)) return;
+        // If same id exists, prefer later entries (userRaw added after allRaw)
+        byId.set(id, { ...(byId.get(id) || {}), ...g, id });
+      });
+
+      const mergedRawGroups = Array.from(byId.values());
+
+      const validatedGroups = validateGroups(mergedRawGroups);
+      console.log('Validated groups (merged):', validatedGroups);
+
+      if (validatedGroups.length === 0 && mergedRawGroups.length > 0) {
+        console.warn('Không validate được group nào, setGroups([]) để UI trống thay vì báo lỗi');
         setGroups([]);
-      } else {
-        const validatedGroups = validateGroups(raw as unknown);
-        console.log('Validated groups:', validatedGroups);
-
-        if (validatedGroups.length === 0) {
-          console.warn('Không validate được group nào, setGroups([]) để UI trống thay vì báo lỗi');
-          setGroups([]);
-          return;
-        }
-
-
-        setGroups(validatedGroups);
+        return;
       }
+
+      setGroups(validatedGroups);
     } catch (error) {
-      handleApiError(error, 'Error fetching user groups');
+      handleApiError(error, 'Error fetching groups');
       setGroups([]);
     } finally {
       setIsLoadingGroups(false);
@@ -288,7 +328,7 @@ const CommunityPageContent: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchUserGroups();
+    fetchGroups();
   }, []);
 
   useEffect(() => {
@@ -370,7 +410,7 @@ const CommunityPageContent: React.FC = () => {
       setNewGroupIsPrivate(false);
 
       // reload groups
-      await fetchUserGroups();
+  await fetchGroups();
     } catch (err) {
       handleApiError(err, 'Error creating group');
     } finally {
@@ -465,7 +505,7 @@ const CommunityPageContent: React.FC = () => {
                 </button>
               </div>
 
-              <GroupList groups={groups} isLoading={isLoadingGroups} onReload={fetchUserGroups} />
+              <GroupList groups={groups} isLoading={isLoadingGroups} onReload={fetchGroups} />
             </>
         }
         content={contentNode}
@@ -513,7 +553,7 @@ const CommunityPageContent: React.FC = () => {
                       setGroupToDelete(null);
 
                       // reload groups
-                      await fetchUserGroups();
+                      await fetchGroups();
                     } catch (err) {
                       setError(err instanceof Error ? err : new Error(String(err)));
                     } finally {

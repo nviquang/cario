@@ -48,8 +48,8 @@ describe('GroupList', () => {
 
   it('shows group details', () => {
     renderWithContext(<GroupList groups={mockGroups} isLoading={false} />);
-  expect(screen.getByText('10 thành viên')).toBeInTheDocument();
-  expect(screen.getByText('20 thành viên')).toBeInTheDocument();
+  expect(screen.getByText('First group')).toBeInTheDocument();
+  expect(screen.getByText('Second group')).toBeInTheDocument();
   });
 
   it('selects group on click', () => {

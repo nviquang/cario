@@ -28,9 +28,9 @@ export const GroupSearchCard: React.FC<GroupSearchCardProps> = ({
   void isLoading;
   void handleSearchChange;
 
-  // IMPORTANT: API calls from the search input are disabled for now.
-  // To re-enable, set `disableApiCalls` to false and ensure `onSearch` is provided.
-  const disableApiCalls = true;
+  // IMPORTANT: API calls from the search input were previously disabled.
+  // Enable them so the search box will call the provided `onSearch` handler.
+  const disableApiCalls = false;
 
   // debounce the API call when `query` changes — gated by disableApiCalls
   useEffect(() => {

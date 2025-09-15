@@ -260,6 +260,7 @@ input::placeholder {
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
+  z-index: 90; /* ensure button is above badges */
 }
 .group-item-menu-button:focus,
 .group-item-menu-button:focus-visible {
@@ -275,7 +276,7 @@ input::placeholder {
   border: 1px solid #e5e7eb;
   border-radius: 6px; /* ✅ Nhỏ hơn */
   box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* ✅ Nhẹ hơn */
-  z-index: 40;
+  z-index: 120; /* ensure menu floats above badges and other elements */
   display: flex;
   flex-direction: column;
   gap: 2px; /* ✅ Khoảng cách nhỏ hơn */

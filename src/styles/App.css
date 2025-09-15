@@ -3844,6 +3844,11 @@ body .community-container .community-header .community-title {
   margin-bottom: 4px;
 }
 
+/* Avoid overlap with absolute-positioned menu button */
+.group-header {
+  padding-right: 64px;
+}
+
 .group-icon {
   color: #666;
 }
@@ -3860,6 +3865,8 @@ body .community-container .community-header .community-title {
   border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
+  position: relative;
+  z-index: 5;
 }
 
 .group-role.admin {
