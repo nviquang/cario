@@ -39,7 +39,16 @@ const CommunityPageContent: React.FC = () => {
 
       const name = raw?.name ?? raw?.title ?? '';
       const description = raw?.description ?? raw?.desc ?? '';
-      const isPrivate = typeof raw?.isPrivate === 'boolean' ? raw.isPrivate : Boolean(raw?.private ?? false);
+      const _privateRaw = raw?.isPrivate ?? raw?.private ?? raw?.visibility ?? null;
+      const isPrivate = ((): boolean => {
+        if (typeof _privateRaw === 'boolean') return _privateRaw;
+        if (typeof _privateRaw === 'string') {
+          const s = _privateRaw.trim().toLowerCase();
+          return s === 'true' || s === '1' || s === 'private' || s === 'yes';
+        }
+        if (typeof _privateRaw === 'number') return _privateRaw === 1;
+        return false;
+      })();
       const createdAt = raw?.createdAt ?? raw?.created_at ?? new Date().toISOString();
       // Determine userRole: prefer explicit userRole from API, else infer from creator
       const explicitRole = raw?.userRole ?? raw?.role ?? null;
@@ -254,7 +263,56 @@ const CommunityPageContent: React.FC = () => {
 
       const mergedRawGroups = Array.from(byId.values());
 
-      const validatedGroups = validateGroups(mergedRawGroups);
+      // Debug: log visibility info for merged groups to help troubleshoot private filtering
+      const debugSummary = (() => {
+        try {
+          return mergedRawGroups.map((g: any) => {
+            const _p = g?.isPrivate ?? g?.private ?? g?.visibility ?? null;
+            const p = typeof _p === 'boolean' ? _p : (typeof _p === 'string' ? _p : String(_p));
+            const creatorObj = g?.creator ?? g?.createdBy ?? g?.owner ?? null;
+            const creatorUsername = creatorObj && typeof creatorObj === 'object' ? (creatorObj.username ?? creatorObj.userName ?? null) : creatorObj;
+            return { id: g.id, name: g.name, privateRaw: p, creator: creatorUsername };
+          });
+        } catch (e) {
+          console.warn('DEBUG - could not summarize mergedRawGroups', e);
+          return null;
+        }
+      })();
+
+      // Filter private groups: only show private groups to their creator
+      const currentRole = (localStorage.getItem('role') || '').toUpperCase();
+
+      // emit debug summary now that currentRole is known
+      if (debugSummary) {
+        console.log('DEBUG - mergedRawGroups summary:', { currentUsername, currentRole, summary: debugSummary });
+      }
+
+      const filteredMerged = mergedRawGroups.filter((g: any) => {
+        // detect private flag in various shapes
+        const _p = g?.isPrivate ?? g?.private ?? g?.visibility ?? null;
+        const isPrivateFlag = ((): boolean => {
+          if (typeof _p === 'boolean') return _p;
+          if (typeof _p === 'string') {
+            const s = _p.trim().toLowerCase();
+            return s === 'true' || s === '1' || s === 'private' || s === 'yes';
+          }
+          if (typeof _p === 'number') return _p === 1;
+          return false;
+        })();
+
+        if (!isPrivateFlag) return true; // public groups shown to everyone
+
+        // derive creator username from common shapes
+        const creatorObj = g?.creator ?? g?.createdBy ?? g?.owner ?? null;
+        const creatorUsername = creatorObj && typeof creatorObj === 'object' ? (creatorObj.username ?? creatorObj.userName ?? null) : creatorObj;
+
+        // private groups: visible only to site admins or the group's creator
+        if (currentRole === 'ADMIN') return true;
+        if (creatorUsername && String(creatorUsername) === currentUsername) return true;
+        return false;
+      });
+
+      const validatedGroups = validateGroups(filteredMerged);
       console.log('Validated groups (merged):', validatedGroups);
 
       if (validatedGroups.length === 0 && mergedRawGroups.length > 0) {
@@ -390,16 +448,25 @@ const CommunityPageContent: React.FC = () => {
     setIsCreatingGroup(true);
     setError(null);
     try {
+      const currentUsername = localStorage.getItem('username') || null;
       const payload = {
         name: newGroupName.trim(),
         description: newGroupDescription.trim(),
+        // include both shapes in case the backend expects `private` or `isPrivate`
         isPrivate: Boolean(newGroupIsPrivate),
+        private: Boolean(newGroupIsPrivate),
+        createdBy: currentUsername,
       };
+
+      console.log('Creating group with payload:', payload);
 
       const res = await apiService.request<any>('/group/create', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       }, 'createGroup');
+
+      console.log('Create group response:', JSON.stringify(res, null, 2));
 
       if (!res.success) throw new Error(res.error || 'Failed to create group');
 
